@@ -37,7 +37,7 @@ namespace TestFunction
         }
 
         [Function("GetEmployee")]
-        public IActionResult GetEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "employees/{employeeNum}")] [FromRoute] int employeeNum)
+        public IActionResult GetEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "employees/{employeeNum}")] HttpRequest req, [FromRoute] int employeeNum)
         {
             try
             {
@@ -58,11 +58,11 @@ namespace TestFunction
         }
 
         [Function("PostEmployee")]
-        public IActionResult PostEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "employees")] [FromBody] string name, [FromBody] string occupation)
+        public IActionResult PostEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "employees")] HttpRequest req, [FromBody] string name, [FromBody] string occupation)
         {
-            if(Employees.Any(x => x.Name.Equals(name) && x.Occupation.Equals(occupation)))
+            if (Employees.Any(x => x.Name.Equals(name)))
             {
-                return new BadRequestObjectResult("Employee with that name and occupation already exists");
+                return new BadRequestObjectResult("Employee with that name already exists");
             }
 
             var postEmployee = new Employee(name, occupation);
@@ -71,8 +71,27 @@ namespace TestFunction
             return new CreatedResult(nameof(PostEmployee), postEmployee);
         }
 
+        [Function("PutEmployee")]
+        public IActionResult PutEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "employees/{employeeNum}")] HttpRequest req, [FromRoute] int employeeNum, [FromBody] string name, [FromBody] string occupation)
+        {
+            try
+            {
+                var putEmployee = new Employee(name, occupation);
+                var employeeIdx = Employees.IndexOf(Employees[employeeNum - 1]);
+
+                Employees.Insert(employeeIdx, putEmployee);
+                return new OkObjectResult($"{putEmployee.Name} has been updated!");
+            }
+
+            catch (Exception e)
+            {
+                return new BadRequestObjectResult(e.ToString());
+            }
+
+        }
+
         [Function("DeleteEmployee")]
-        public IActionResult DeleteEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "employees/{employeeNum}")] [FromRoute]int employeeNum)
+        public IActionResult DeleteEmployee([HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "employees/{employeeNum}")] HttpRequest req, [FromRoute] int employeeNum)
         {
             try
             {
@@ -84,7 +103,7 @@ namespace TestFunction
                     return new BadRequestObjectResult($"Error deleting: {deleteEmployee.Name} deleted");
                 }
 
-                return new OkObjectResult($"Employee: {deleteEmployee.Name} has been deleted");
+                return new OkObjectResult($"Employee: {deleteEmployee.Name} has been deleted. There are now: {Employees.Count()} employees left!");
             }
 
             catch (ArgumentOutOfRangeException)
@@ -92,7 +111,7 @@ namespace TestFunction
                 return new NotFoundObjectResult($"No employee was found with ID: {employeeNum}\n\nPlease enter a number from: {Employees.IndexOf(Employees.First()) + 1} - {Employees.IndexOf(Employees.Last()) + 1}");
             }
 
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 return new BadRequestObjectResult(ex.ToString());
 
