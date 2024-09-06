@@ -1,2 +1,2 @@
 # TestFunction
-Serverless Azure Functions
+Http Triggered Azure Functions
