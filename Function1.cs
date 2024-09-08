@@ -134,11 +134,15 @@ namespace TestFunction
 
             await Task.Delay(2000);
 
-            var modifiedOpsSet = new Dictionary<string, int>
+            var insertChanges = dbChanges.ToList().Where(chg => chg.Operation.ToString().Equals("Insert")).Count();
+            var updateChanges = dbChanges.ToList().Where(chg => chg.Operation.ToString().Equals("Update")).Count();
+            var deleteChanges = dbChanges.ToList().Where(chg => chg.Operation.ToString().Equals("Delete")).Count();
+
+            var modifiedOpsSet = new Dictionary<string, dynamic>
             {
-                ["Inserted"] = dbChanges.ToList().Where(chg => chg.Operation.ToString().Equals("Insert")).Count(),
-                ["Updated"] = dbChanges.ToList().Where(chg => chg.Operation.ToString().Equals("Update")).Count(),
-                ["Deleted"] = dbChanges.ToList().Where(chg => chg.Operation.ToString().Equals("Update")).Count()
+                ["Inserted"] = insertChanges > 0 ? insertChanges : "No Changes",
+                ["Updated"] = updateChanges > 0 ? updateChanges : "No Changes",
+                ["Deleted"] = deleteChanges > 0 ? deleteChanges : "No Changes"
             };
 
             modifiedOpsSet.ForEach(x => Console.WriteLine($"{x.Key} - {x.Value}"));
